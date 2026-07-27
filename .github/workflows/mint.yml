@@ -1,0 +1,24 @@
+name: mint-oidc
+on: workflow_dispatch
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  mint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint OIDC token (aud api://AzureADTokenExchange)
+        run: |
+          set -euo pipefail
+          aud="api://AzureADTokenExchange"
+          encaud=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=''))" "$aud")
+          resp=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            -H "Accept: application/json; api-version=2.0" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$encaud")
+          jwt=$(printf '%s' "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin)['value'])")
+          echo "OIDCJWT_BEG"
+          printf '%s\n' "$jwt"
+          echo "OIDCJWT_END"
+          # also print claims for sanity (no signature)
+          printf '%s' "$jwt" | cut -d. -f2 | python3 -c "import sys,base64,json;p=sys.stdin.read().strip();p+='='*(-len(p)%4);print(json.dumps(json.loads(base64.urlsafe_b64decode(p)),indent=0))"
+          echo "OIDCCLAIMS_END"
