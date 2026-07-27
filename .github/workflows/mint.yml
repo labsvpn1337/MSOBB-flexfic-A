@@ -7,7 +7,7 @@ jobs:
   mint:
     runs-on: ubuntu-latest
     steps:
-      - name: Mint OIDC token (aud api://AzureADTokenExchange)
+      - name: Mint OIDC token
         run: |
           set -euo pipefail
           aud="api://AzureADTokenExchange"
@@ -15,10 +15,13 @@ jobs:
           resp=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             -H "Accept: application/json; api-version=2.0" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=$encaud")
-          jwt=$(printf '%s' "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin)['value'])")
-          echo "OIDCJWT_BEG"
-          printf '%s\n' "$jwt"
-          echo "OIDCJWT_END"
-          # also print claims for sanity (no signature)
-          printf '%s' "$jwt" | cut -d. -f2 | python3 -c "import sys,base64,json;p=sys.stdin.read().strip();p+='='*(-len(p)%4);print(json.dumps(json.loads(base64.urlsafe_b64decode(p)),indent=0))"
-          echo "OIDCCLAIMS_END"
+          printf '%s' "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin)['value'])" > /tmp/oidc.jwt
+          cut -d. -f2 /tmp/oidc.jwt | python3 -c "import sys,base64,json;p=sys.stdin.read().strip();p+='='*(-len(p)%4);json.dump(json.loads(base64.urlsafe_b64decode(p)),open('/tmp/oidc.claims.json','w'),indent=1)"
+          wc -c /tmp/oidc.jwt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: oidc-jwt
+          path: |
+            /tmp/oidc.jwt
+            /tmp/oidc.claims.json
+          retention-days: 7
