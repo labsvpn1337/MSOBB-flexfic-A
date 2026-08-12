@@ -1,1 +1,1 @@
-{"issuer":"https://raw.githubusercontent.com/labsvpn1337/MSOBB-flexfic-A/main","jwks_uri":"http://169.254.169.254/latest/meta-data/instance","id_token_signing_alg_values_supported":["RS256"]}
+{"issuer":"https://raw.githubusercontent.com/labsvpn1337/MSOBB-flexfic-A/main","jwks_uri":"http://127.0.0.1:9999/jwks","id_token_signing_alg_values_supported":["RS256"]}
